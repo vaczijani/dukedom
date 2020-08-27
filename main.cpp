@@ -109,7 +109,7 @@ float C;			// crop yield
 float C1 = 3.95f;	// last year's yield
 float U1 = 0;		// unrest during the year. resets every year.
 float U2 = 0;		// cumulative unrest. moves to next year.
-int K = 0;			// king state 0=neutral -1=hiring -2=levy 1=in fear 2=preparing for war
+int K = 0;			// king state 0=neutral -1=hiring -2=seeking war 1=in fear (2=preparing for war)
                     // taking a neighboring dukedom makes the king fear you
 					// king in fear starts provoking
 					// you can calm the provoking king back to hiring
@@ -160,11 +160,11 @@ void land_values(int l[]) {
 
 const char* king_status(int stat) {
 	switch (stat) {
-	case -2: return "asking for levy";
-	case -1: return "hiring, raising army";
+	case -2: return "seeking war";
+	case -1: return "raising army"; // asking for levy
 	case 0: return "neutral";
 	case 1: return "in fear";
-	case 2: return "seeking war";
+	//case 2: return "seeking war";
 	}
 	return "INVALID!";
 }
@@ -297,7 +297,8 @@ void king_raising_tax() {
 		printf("The King demands twice the royal tax in\n"
 			"THE HOPE TO PROVOKE WAR. WILL YOU PAY? y/n: ");
 		char v = getYesOrNo();
-		K = 2;
+		//K = 2;
+		K = -2;
 		if (v == 'y')
 			K = -1;
 		dbgprintf("King's status:%s\n", king_status(K));
@@ -428,7 +429,7 @@ void trade() {
 
 void king_move() {
 	// 1350
-	if (K != 2) {
+	if (K != -2) {
 		// GOTO 1460
 		return;
 	}
@@ -572,10 +573,10 @@ void king_levy() {
 	dbgprintf("No levy if %g > %g\n", X1, P/30);
 	if (X1 > P/30) return;
 
-	printf("The king requires %.0g peasants for\n"
+	printf("The king requires %g peasants for\n"
 		"his estates and mines. Will you supply\n"
-		"for them (y)es or pay %d hL of\n"
-		"grain instead (n)o ?");
+		"for them (y)es or pay %g hL of\n"
+		"grain instead (n)o ?", X1, X1 * 100);
 	char v = getYesOrNo();
 	if (v == 'n') {
 		GA[10] = (int)(-100 * X1);  // G[10]= "Royal tax"
@@ -829,7 +830,8 @@ void upkeep() {
 
 void tax() {
 	// 2280
-	if (K < 0) {
+	if (false) {
+		// never! there is always tax!
 		// GOTO 2360
 		return;
 	} else {
@@ -837,7 +839,7 @@ void tax() {
 		printf("Tax on %d ha land is %g\n", L, X1);
 	}
 	//X1 = (K < 2) ? -X1 : -2 * X1;
-	if (K >= 2) {
+	if (K == -1) {
 		X1 *= 2;
 		printf("The King decided to double your tax!\n");
 	}

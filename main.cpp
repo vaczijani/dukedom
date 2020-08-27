@@ -24,6 +24,14 @@
  #define dbgland_values(x)
 #endif
 
+#ifdef HINT
+ #define hint(...) printf(__VA_ARGS__)
+ #define hint_tab(...) printf(__VA_ARGS__)
+#else
+ #define hint(...)
+#define hint_tab(...)
+#endif
+
 // Replicating BASIC RND() function
 // RND(0): (0..1)
 // RND(1): [0..1] not sure?!
@@ -232,6 +240,7 @@ void report() {
 	for (int j = 1; j <= 8; ++j) 
 		if (PA[j] != 0 || j == 1) print_tab(PS[j], 25, PA[j]);
 	print_tab("Peasants at end", 25, P);
+	printf("\n");
 	for (int j = 1; j <= 3; ++j)
 		if (LA[j] != 0 || j == 1) print_tab(LS[j], 25, LA[j]);
 	print_tab("Land at end of year", 25, L);
@@ -377,25 +386,26 @@ void trade() {
 	if (LA[2] > 0) {
 		G += GA[3];
 		L += LA[2];
-		print_tab(LS[2], 25, LA[2]);
-		print_tab(GS[3], 25, GA[3]);
+		hint_tab(LS[2], 25, LA[2]);
+		hint_tab(GS[3], 25, GA[3]);
 		dbgland_values(SA);
 		return;
 	}
 	// SELL
 	X2 = (float)SA[1] + SA[2] + SA[3];  // size of good (>=60%) land
-	printf("You can sell %g ha land\n", X2);
+	hint("You have %g ha good land\n", X2);
 	// maximum of 3 rounds of "auction"
-	printf("Sale has max of 3 rounds.\n"
-		"Price drops by 1 each round!\n");
+	hint("Sale has max of 3 rounds.\n"
+		"Price drops by 1 each round!\n"
+		"You can sell for max 4000 hL!\n");
 	for (int j = 1; j <= 3; ++j) {
 		--X1;
 		printf("Land to sell at %g hL/ha [0-%g]= ", X1, X2);
 		int v;
 		scanf("%d", &v);
-		if (v > X2) 
+		if (v > X2) {
 			printf("But you only have %g ha of good land (yield >= 60%)\n", X2);
-		else {
+		} else {
 			if (v * X1 <= 4000) {
 				GA[3] = (int)(v * X1); // G[3]= "Land deals"
 				LA[2] = -v; // L[2]= "Bought/sold" negative=sold
@@ -417,11 +427,12 @@ void trade() {
 					GA[3] /= 2;
 				}
 				G += GA[3];
-				print_tab(LS[2], 25, LA[2]);
-				print_tab(GS[3], 25, GA[3]);
+				hint_tab(LS[2], 25, LA[2]);
+				hint_tab(GS[3], 25, GA[3]);
 				return;
-			} else
+			} else {
 				printf("No buyers have that much grain try less (<4000)\n");
+			}
 		}
 	}
 	printf("Buyers have lost interest\n");
@@ -471,7 +482,7 @@ void plant() {
 		else {
 			GA[4] = -2 * v; // G[4]= "Seeding" negative: used, will need to subtract
 			GA[8] = v; // G[8]= "Crop yield", now it's ha to be planted
-			print_tab(GS[4], 25, GA[4]);
+			hint_tab(GS[4], 25, GA[4]);
 			G += GA[4];
 			// collect usable crops for grain production
 			for (int j = 1; j <= 6; ++j) U[j] = 0;
@@ -563,7 +574,7 @@ void store() {
 	GA[5] = -(int)(X1 * G / 83); // G[5]= "Rat losses"
 	G += GA[5];
 	printf("Rats infest the granary\n");
-	print_tab(GS[5], 25, GA[5]);
+	hint_tab(GS[5], 25, GA[5]);
 }
 
 void king_levy() {
@@ -581,11 +592,11 @@ void king_levy() {
 	if (v == 'n') {
 		GA[10] = (int)(-100 * X1);  // G[10]= "Royal tax"
 		G += GA[10];
-		print_tab(GS[10], 25, GA[10]);
+		hint_tab(GS[10], 25, GA[10]);
 	} else {
 		PA[3] = (int)(-X1); // P[3]= "King's levy"
 		P += PA[3];
-		printf(PS[3], 25, PA[3]);
+		hint_tab(PS[3], 25, PA[3]);
 	}
 }
 
@@ -646,13 +657,13 @@ void war() {
 				X2 = 0;				
 				// GOTO 1910
 			}
-			print_tab(PS[4], 25, PA[4]);
+			hint_tab(PS[4], 25, PA[4]);
 			dbgprintf("Enemy = %g\n", X2);
 			// 1910
 			P += PA[4];
 			if (X2 < 1) {
 				U1 -= 2 * PA[4] + 3 * PA[5]; // P[5]= "Looting victims"
-				print_tab(PS[5], 25, PA[5]);
+				hint_tab(PS[5], 25, PA[5]);
 				dbgprintf("Unrest: %g\n", U1);
 				return;
 			}
@@ -679,7 +690,7 @@ void war() {
 		dbgprintf("%40s", "");
 		dbgprintf("Your win>1: %g\n", X2);
 		LA[3] = (int)(0.8 * X2);
-		print_tab(LS[3], 25, LA[3]);
+		hint_tab(LS[3], 25, LA[3]);
 		if (-LA[3] <= 0.67 * L) {
 			dbgprintf("%40s", "");
 			dbgprintf("Victory: %d <= %g\n", -LA[3], 0.67 * L);
@@ -705,7 +716,7 @@ void war() {
 					printf("You have won the war\n");
 					X4 = 0.67f;
 					GA[7] = (int)(1.7 * LA[3]); // G[7]="Fruits of war" L[3]="Fruits of war"
-					print_tab(GS[7], 25, GA[7]);
+					hint_tab(GS[7], 25, GA[7]);
 					G += GA[7];
 					// GOTO 2080
 				}
@@ -718,7 +729,7 @@ void war() {
 				printf("You have overrun the enemy and annexed\n"
 					"his entire dukedom\n");
 				GA[7] = 3513; // G[7] = "Fruits of war"
-				print_tab(GS[7], 25, GA[7]);
+				hint_tab(GS[7], 25, GA[7]);
 				G += GA[7];
 				X6 = -47;
 				X4 = 0.55f;				
@@ -757,15 +768,15 @@ void war() {
 				"mercenaries\n");
 		}
 		// 2130
-		print_tab(GS[6], 25, GA[6]);
+		hint_tab(GS[6], 25, GA[6]);
 		G += GA[6]; // "Mercenary hire"
 		PA[5] = (PA[5] <= P) ? -PA[5] : P; // "Looting victims"
-		print_tab(PS[5], 25, PA[5]);
+		hint_tab(PS[5], 25, PA[5]);
 		P += PA[5];
-		print_tab(LS[3], 25, LA[3]);
+		hint_tab(LS[3], 25, LA[3]);
 		L += LA[3]; // L[3]="Fruits of war"
 		U1 -= 2 * PA[4] + 3 * PA[5];  // P[4]="War casualties"
-		print_tab(PS[4], 25, PA[4]);
+		hint_tab(PS[4], 25, PA[4]);
 		dbgprintf("Unrest: %g\n", U1);
 	} else {
 		// 1760
@@ -791,7 +802,7 @@ void plague() {
 			X2 = X1 * 5;
 			PA[6] = -(int)(P / X2); // P[6]="Disease victims"
 			P += PA[6];
-			print_tab(PS[6], 25, PA[6]);
+			hint_tab(PS[6], 25, PA[6]);
 		} else {
 			if (D > 0) {
 				// GOTO 2240
@@ -801,7 +812,7 @@ void plague() {
 				X2 = 3;
 				PA[6] = -(int)(P / X2);
 				P += PA[6];
-				print_tab(PS[6], 25, PA[6]);
+				hint_tab(PS[6], 25, PA[6]);
 				// GOTO 2240
 			}
 		}
@@ -814,9 +825,9 @@ void reproduce() {
 	X1 = (float)FNX(8) + 4;
 	X1 = (PA[5] == 0) ? X1 : 4.5f; // P[5]= "Looting victims"
 	PA[8] = (int)(P / X1); // P[8]= "Births"
-	printf("%d peasants born\n", PA[8]);
+	hint("%d peasants born\n", PA[8]);
 	PA[7] = (int)(0.3 - P / 22); // P[7]= "Natural deaths"
-	printf("%d peasants died\n", -PA[7]);
+	hint("%d peasants died\n", -PA[7]);
 	P += PA[7] + PA[8];
 }
 
@@ -824,7 +835,7 @@ void upkeep() {
 	X1 = (float)GA[8] - 4000; // G[8]= "Crop yield"
 	GA[9] = (X1 <= 0) ? -GA[9] : -(int)(0.1 * X1); // G[9]= "Castle expense"
 	GA[9] -= 120;
-	printf("Upkeep of %d harvest is %d\n", GA[8], -GA[9]);
+	hint("Upkeep of %d harvest is %d\n", GA[8], -GA[9]);
 	G += GA[9];
 }
 
@@ -836,12 +847,12 @@ void tax() {
 		return;
 	} else {
 		X1 = (float)(int)(L / 2);
-		printf("Tax on %d ha land is %g\n", L, X1);
+		hint("Tax on %d ha land is %g\n", L, X1);
 	}
 	//X1 = (K < 2) ? -X1 : -2 * X1;
 	if (K == -1) {
 		X1 *= 2;
-		printf("The King decided to double your tax!\n");
+		hint("The King decided to double your tax!\n");
 	}
 	if (X1 <= G) {
 		GA[10] -= (int)X1;
@@ -864,10 +875,10 @@ int main() {
 		report();
 		test_end_game();
 		king_raising_tax();
-		printf("Feed 13 hL to avoid starving\n");
+		hint("Feed 13 hL to avoid starving\n");  // hint
 		feed();
 		if (U1 > 88 || P < 33) test_end_game();
-		printf("Tax will be land * 0.5 hL grain.\n");
+		if (K >= 0) hint("Tax will be land * 0.5 hL grain.\n");  // hint
 		trade();
 		king_move();
 		if (L < 10) test_end_game();
@@ -882,7 +893,7 @@ int main() {
 		upkeep();
 		tax();
 		U2 = (int)(U2 * 0.85) + U1;
-		printf("Unrest to next year %g\n", U2);
+		hint("Unrest to next year %g\n", U2);  // hint
 		// GOTO 720
 	} while (true);
 	return 0;
